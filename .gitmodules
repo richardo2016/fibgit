@@ -1,0 +1,6 @@
+[submodule "libgit2"]
+	path = libgit2
+	url = https://github.com/libgit2/libgit2
+[submodule "fibjs"]
+	path = fibjs
+	url = https://github.com/fibjs/fibjs
