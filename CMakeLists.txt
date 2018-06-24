@@ -17,6 +17,7 @@ add_executable(fibgit ${src_list})
 
 set(BIN_DIR ${PROJECT_SOURCE_DIR}/bin/${OS}_${ARCH}_${BUILD_TYPE})
 set(FIBJS_DIR ${PROJECT_SOURCE_DIR}/fibjs/bin/${OS}_${ARCH}_${BUILD_TYPE})
+set(LIBGIT2_DIR ${PROJECT_SOURCE_DIR}/libgit2/${LIBGIT2_BUILD_PATH})
 set(EXECUTABLE_OUTPUT_PATH ${BIN_DIR})
 
 include(CheckIncludeFiles)
@@ -82,13 +83,26 @@ endif()
 set(CMAKE_C_FLAGS "${flags}")
 set(CMAKE_CXX_FLAGS "${flags} ${ccflags}")
 
-include_directories("${PROJECT_SOURCE_DIR}/include" "${PROJECT_SOURCE_DIR}/fibjs/fibjs/include" "${PROJECT_SOURCE_DIR}/fibjs/vender" "${PROJECT_SOURCE_DIR}/fibjs/vender/v8" "${PROJECT_SOURCE_DIR}/fibjs/vender/v8/include" "${PROJECT_SOURCE_DIR}/fibjs/vender/mbedtls" "${PROJECT_SOURCE_DIR}/fibjs/vender/zlib/include" "${CMAKE_CURRENT_BINARY_DIR}")
+include_directories(
+	"${PROJECT_SOURCE_DIR}/include"
+	"${PROJECT_SOURCE_DIR}/libgit2/include"
+	"${PROJECT_SOURCE_DIR}/fibjs/fibjs/include"
+	"${PROJECT_SOURCE_DIR}/fibjs/vender"
+	"${PROJECT_SOURCE_DIR}/fibjs/vender/v8"
+	"${PROJECT_SOURCE_DIR}/fibjs/vender/v8/include"
+	"${PROJECT_SOURCE_DIR}/fibjs/vender/mbedtls"
+	"${PROJECT_SOURCE_DIR}/fibjs/vender/zlib/include"
+	"${CMAKE_CURRENT_BINARY_DIR}"
+)
 
 set(libs fibjs expat gumbo gd tiff jpeg png webp zlib leveldb snappy ev pcre sqlite mongo umysql uuid exif mbedtls v8 zmq unzip editline exlib)
 
 foreach(lib ${libs})
 	target_link_libraries(fibgit "${FIBJS_DIR}/lib${lib}.a")
 endforeach()
+
+message("${LIBGIT2_DIR}/${LIBGIT2_OUTPUTNAME}")
+target_link_libraries(fibgit "${LIBGIT2_DIR}/${LIBGIT2_OUTPUTNAME}.a")
 
 target_link_libraries(fibgit pthread)
 

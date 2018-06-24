@@ -7,6 +7,7 @@
 
 #include "fibjs.h"
 #include "object.h"
+#include "git2.h"
 
 namespace fibjs {
 
