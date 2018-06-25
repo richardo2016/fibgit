@@ -9,6 +9,9 @@
 #include "object.h"
 #include "git2.h"
 
+extern "C"{
+    #include "add.h"
+}
 namespace fibjs {
 
 void importModule()
@@ -105,7 +108,8 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 int32_t main(int32_t argc, char* argv[])
 {
-    fibjs::main(argc, argv);
+    // fibjs::main(argc, argv);
+    test_git_add(argc, argv);
     return 0;
 }
 #endif

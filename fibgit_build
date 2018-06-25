@@ -82,11 +82,12 @@ if [ "$ENABLE_JOBS" = "1" -a "$BUILD_JOBS" = "" ]; then
 	fi
 fi
 
-FIBGIT_PATH=`pwd`
-OUT_PATH=${FIBGIT_PATH}/out
-BIN_ROOT=${FIBGIT_PATH}/bin
-LIB_OUT_DIRNAME=${TARGET_OS}_${TARGET_ARCH}_${BUILD_TYPE}
-BIN_PATH=${FIBGIT_PATH}/bin/${LIB_OUT_DIRNAME}
+ROOT_PATH=`pwd`
+FIBGIT_LIB_CMAKELIST_PATH=${ROOT_PATH}/src
+OUT_PATH=${ROOT_PATH}/out
+BIN_ROOT=${ROOT_PATH}/bin
+ARCH_DIRNAME=${TARGET_OS}_${TARGET_ARCH}_${BUILD_TYPE}
+BIN_PATH=${ROOT_PATH}/bin/${ARCH_DIRNAME}
 
 if [ ${BUILD_TYPE} = 'clean' ]; then
 	if [ -e "${OUT_PATH}" ]; then
@@ -104,12 +105,7 @@ fi
 cd libgit2
 
 LIBGIT2_BUILD_TYPE="Release" # always use Release version libgit2 firstly
-# if [ "${BUILD_TYPE}" = "release" ]; then
-# 	LIBGIT2_BUILD_TYPE="Release"
-# else
-# 	LIBGIT2_BUILD_TYPE="Debug"
-# fi
-LIBGIT2_BUILD_PATH=build/${LIB_OUT_DIRNAME}
+LIBGIT2_BUILD_PATH=build/${ARCH_DIRNAME}
 LIBGIT2_OUTPUTNAME=libgit2
 CMAKE_VARS_2_FIBGIT_COMPILATION="-DLIBGIT2_OUTPUTNAME=${LIBGIT2_OUTPUTNAME} -DLIBGIT2_BUILD_PATH=${LIBGIT2_BUILD_PATH}"
 
@@ -120,10 +116,10 @@ cmake --build .
 if [ ! "$FIBGIT_RUN_LIBGIT2_TEST" = "" ]; then
 	./${LIBGIT2_OUTPUTNAME}_clar
 fi
-cd ../../../
+cd ${ROOT_PATH}
 # [libgit2]Compile statically :end
 
-# Compile project based on fibjs :start
+# [fibjs]Compile project based on fibjs :start
 cd fibjs
 
 if [ ! "$BUILD_JOBS" = "" ]; then
@@ -136,18 +132,19 @@ if [ ! -e "${OUT_PATH}" ]; then
 	mkdir "${OUT_PATH}"
 fi
 
-OUT_PATH=${OUT_PATH}/${LIB_OUT_DIRNAME}
+OUT_PATH=${OUT_PATH}/${ARCH_DIRNAME}
 if [ ! -e ${OUT_PATH} ]; then
 	mkdir ${OUT_PATH}
 fi
 
-OUT_PATH=${OUT_PATH}/program
-if [ ! -e ${OUT_PATH} ]; then
-	mkdir ${OUT_PATH}
+# [fibgit:libs]Compile lib of fibgit :start
+OUT_LIB_PATH=${OUT_PATH}/lib
+if [ ! -e ${OUT_LIB_PATH} ]; then
+	mkdir ${OUT_LIB_PATH}
 fi
 
-cd ${OUT_PATH}
-cmake ${CMAKE_VARS_2_FIBGIT_COMPILATION} -DBUILD_TYPE=${BUILD_TYPE} -DBUILD_OPTION="${BUILD_OPTION}" ${FIBGIT_PATH} > CMake.log
+cd ${OUT_LIB_PATH}
+cmake -DBUILD_TYPE=${BUILD_TYPE} -DBUILD_OPTION="${BUILD_OPTION}" ${FIBGIT_LIB_CMAKELIST_PATH} > CMake.log
 if [ $? != 0 ]; then
 	exit 1
 fi
@@ -160,11 +157,35 @@ fi
 if [ $? != 0 ]; then
 	exit 1
 fi
-# Compile project based on fibjs :end
+# [fibgit:libs]Compile lib of fibgit :end
+
+# [fibgit:main]Compile main fibgit :start
+OUT_MAIN_PATH=${OUT_PATH}/program
+if [ ! -e ${OUT_MAIN_PATH} ]; then
+	mkdir ${OUT_MAIN_PATH}
+fi
+
+cd ${OUT_MAIN_PATH}
+cmake ${CMAKE_VARS_2_FIBGIT_COMPILATION} -DBUILD_TYPE=${BUILD_TYPE} -DBUILD_OPTION="${BUILD_OPTION}" ${ROOT_PATH} > CMake.log
+if [ $? != 0 ]; then
+	exit 1
+fi
+
+if [ ! "$BUILD_JOBS" = "" ]; then
+	sh -c "${BUILD_VERBOSE} make -j${BUILD_JOBS}"
+else
+	sh -c "${BUILD_VERBOSE} make"
+fi
+if [ $? != 0 ]; then
+	exit 1
+fi
+# [fibgit:main]Compile main fibgit :end
+
+# [fibjs]Compile project based on fibjs :end
 
 if [ "${BUILD_TYPE}" = "release" ]; then
 	cd "${BIN_PATH}"
-	cp "${FIBGIT_PATH}/installer.txt" "installer.sh"
+	cp "${ROOT_PATH}/installer.txt" "installer.sh"
 	tar -zcf fibgit.tar.gz fibgit
 	echo '[100%] Built target fibgit.tar.gz'
 	cat fibgit.tar.gz >> installer.sh
@@ -183,7 +204,7 @@ if [ "${BUILD_TYPE}" = "release" ]; then
 	fi
 fi
 
-cd "${FIBGIT_PATH}"
+cd "${ROOT_PATH}"
 
 txtbld=$(tput bold)
 bldred=${txtbld}$(tput setaf 1)
