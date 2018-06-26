@@ -83,7 +83,8 @@ if [ "$ENABLE_JOBS" = "1" -a "$BUILD_JOBS" = "" ]; then
 fi
 
 ROOT_PATH=`pwd`
-FIBGIT_LIB_CMAKELIST_PATH=${ROOT_PATH}/src
+FIBGIT_LIB_CMAKELIST_PATH=${ROOT_PATH}/fibgit
+FIBGIT_MAIN_CMAKELIST_PATH=${ROOT_PATH}/fibgit/program
 OUT_PATH=${ROOT_PATH}/out
 BIN_ROOT=${ROOT_PATH}/bin
 ARCH_DIRNAME=${TARGET_OS}_${TARGET_ARCH}_${BUILD_TYPE}
@@ -102,7 +103,7 @@ if [ ${BUILD_TYPE} = 'clean' ]; then
 fi
 
 # [libgit2]Compile statically :start
-cd libgit2
+cd ${ROOT_PATH}/libgit2
 
 LIBGIT2_BUILD_TYPE="Release" # always use Release version libgit2 firstly
 LIBGIT2_BUILD_PATH=build/${ARCH_DIRNAME}
@@ -116,11 +117,10 @@ cmake --build .
 if [ ! "$FIBGIT_RUN_LIBGIT2_TEST" = "" ]; then
 	./${LIBGIT2_OUTPUTNAME}_clar
 fi
-cd ${ROOT_PATH}
 # [libgit2]Compile statically :end
 
 # [fibjs]Compile project based on fibjs :start
-cd fibjs
+cd ${ROOT_PATH}/fibjs
 
 if [ ! "$BUILD_JOBS" = "" ]; then
     sh build -j${BUILD_JOBS}
@@ -166,7 +166,7 @@ if [ ! -e ${OUT_MAIN_PATH} ]; then
 fi
 
 cd ${OUT_MAIN_PATH}
-cmake ${CMAKE_VARS_2_FIBGIT_COMPILATION} -DBUILD_TYPE=${BUILD_TYPE} -DBUILD_OPTION="${BUILD_OPTION}" ${ROOT_PATH} > CMake.log
+cmake ${CMAKE_VARS_2_FIBGIT_COMPILATION} -DBUILD_TYPE=${BUILD_TYPE} -DBUILD_OPTION="${BUILD_OPTION}" ${FIBGIT_MAIN_CMAKELIST_PATH} > CMake.log
 if [ $? != 0 ]; then
 	exit 1
 fi
