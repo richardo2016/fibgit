@@ -1,0 +1,75 @@
+dist: trusty
+language: cpp
+services:
+  - docker
+matrix:
+  include:
+    - os: osx
+      osx_image: xcode9
+      env:
+        - ARCH=amd64
+    - os: osx
+      osx_image: xcode9
+      env:
+        - ARCH=i386
+    - os: linux
+      env:
+        - ARCH=amd64
+    - os: linux
+      env:
+        - ARCH=i386
+    - os: linux
+      env:
+        - ARCH=arm
+    - os: linux
+      env:
+        - ARCH=arm64
+    - os: linux
+      env:
+        - ARCH=mips
+    - os: linux
+      env:
+        - ARCH=mips64
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - build-essential
+      - libssl-dev
+      - lcov
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      rvm install ruby-2.4.0;
+      rvm --default use 2.4.0;
+      ruby -v;
+      brew update;
+    fi
+install:
+  - git submodule init
+  - git submodule update
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+      docker pull fibjs/build-env:latest;
+    fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      brew install xz;
+      brew install openssl;
+    fi
+script:
+  - echo "${ARCH}"
+  - ./.travis/build.sh
+  - ./.travis/test.sh
+  - if [[ "$TRAVIS_TAG" != "" ]]; then 
+      ./.travis/release.sh; 
+    fi
+deploy:
+  - provider: releases
+    api_key:
+      secure: H2uzjYeu66zNVa8WeMdWFY+cV8nQDuTZpq2XJCHz5eRBcPu4O7hgiA2ArcuVMZFr7v8TxniTuhEt3ymhoMbv9Ja7UtgSTK4GeDdx6l4a1npHn9bKVoTc0POQV0w/ySsDmmOa5IhaMZqiEfvwQXjhJGJJaP/JGC1+GfvPWd8z6hTH46nfpiEjDeNgWySz0WrvzBrcqVNAPGlko8CwrVQVbFu53HF673rdKr6ofJuhBDzRAcg7xZ9mfBonyrzpzI5cwXMhRzf7AaIxpXn2vjiHmiIXcxEtF77tqP9QV8bB3BTZiTEbtv/seWTOJvWCDI+V3ZdnrHE2DYatNP8tSfSBvEA2GSKHmfOLFT31g9JJThV6tGsMQEzk9k8xMq0AfL3bmzUacDVQ5xu5TGPgT7vsa+ajrrXf7v5NyB9IL/hzlJLI0eUnt+wD39tICb5iwyCLvK9GgVew7qi7BcTBOEWNuNQuPTFBR/GmI0uG2CkyhAqnAuxbd7+vxjYXCUKUfdStLENHXZbZBvio7eN6fI/nVyJWpDdeAxe3nVODv27o0h/6hDJxH/dJlgUHVqkZqT8ooQSuMx/oPL/EDJCnPl/O+jQlMwjTOeBTRBSbKCHVJaF4ZhMCyZfs5OYFjHBEgVekKg7v0ujaA8jbnqmEImOc8mrG4FquNu16l949feAV4eM=
+    file_glob: true
+    file: ${TRAVIS_TAG}/*
+    skip_cleanup: true
+    overwrite: true
+    on:
+      tags: true
+      repo: richardo2016/fibgit

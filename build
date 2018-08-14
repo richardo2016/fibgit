@@ -44,11 +44,15 @@ BUILD_TYPE="release"
 for i in "$@"
 do
 	case $i in
+		i386|amd64|arm|arm64|mips|mips64|ppc|ppc64) TARGET_ARCH=$i
+			;;
 		release|debug|clean) BUILD_TYPE=$i
 			;;
-			ci) CI="ci"
+		ci) CI="ci"
 			;;
 		-j*) ENABLE_JOBS=1; BUILD_JOBS="${i#-j}"
+			;;
+		-v) BUILD_VERBOSE='VERBOSE=1'
 			;;
         --help|-h) usage
 			;;
@@ -108,10 +112,18 @@ cd ${ROOT_PATH}/libgit2
 LIBGIT2_BUILD_TYPE="Release" # always use Release version libgit2 firstly
 LIBGIT2_BUILD_PATH=build/${ARCH_DIRNAME}
 LIBGIT2_OUTPUTNAME=libgit2
+# default for mac osx
+LIBGIT2_OPENSSL_ROOT_DIR=/usr/local/opt/openssl
+LIBGIT2_OPENSSL_LIBRARIES=/usr/local/opt/openssl/lib
+if [ $TARGET_OS = "Linux" ]; then
+	LIBGIT2_OPENSSL_ROOT_DIR=/usr/local/ssl
+	LIBGIT2_OPENSSL_LIBRARIES=/usr/local/ssl/lib
+fi
+
 CMAKE_VARS_2_FIBGIT_COMPILATION="-DLIBGIT2_OUTPUTNAME=${LIBGIT2_OUTPUTNAME} -DLIBGIT2_BUILD_PATH=${LIBGIT2_BUILD_PATH}"
 
 mkdir -p $LIBGIT2_BUILD_PATH && cd $LIBGIT2_BUILD_PATH
-cmake -DBUILD_SHARED_LIBS:BOOL=OFF -DCMAKE_BUILD_TYPE=${LIBGIT2_BUILD_TYPE} ../../
+cmake -DBUILD_SHARED_LIBS:BOOL=OFF -DCMAKE_BUILD_TYPE=${LIBGIT2_BUILD_TYPE} -DOPENSSL_ROOT_DIR=${LIBGIT2_OPENSSL_ROOT_DIR} -DOPENSSL_LIBRARIES=${LIBGIT2_OPENSSL_LIBRARIES} ../../
 cmake --build .
 # [libgit2]run unit-test
 if [ ! "$FIBGIT_RUN_LIBGIT2_TEST" = "" ]; then
